@@ -79,7 +79,7 @@ CREATE POLICY "Admins can delete categories"
   USING (public.has_role(auth.uid(), 'admin'));
 
 -- Crear tabla de productos
-CREATE TABLE public.products (
+CREATE TABLE public.productos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
