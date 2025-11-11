@@ -76,9 +76,7 @@ export const ProductCard = ({
         <h3 className="font-semibold text-lg mb-2 text-foreground line-clamp-1">
           {name}
         </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {description}
-        </p>
+       
       </CardContent>
       <CardFooter className="p-4 pt-0 flex-col gap-3">
         <div className="flex items-center justify-between w-full">

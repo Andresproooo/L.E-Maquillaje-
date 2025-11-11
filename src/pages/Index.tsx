@@ -47,14 +47,23 @@ const Index = () => {
   const fetchProducts = async () => {
     setLoading(true);
     const { data } = await supabase
-      .from("products")
-      .select(`
-        *,
-        categories (name)
-      `)
+      .from("productos")
+      .select("*")
       .order("created_at", { ascending: false });
 
-    if (data) setProducts(data);
+    if (data)
+      setProducts(
+        data.map((row: any) => ({
+          id: row.id,
+          name: row.nombre,
+          description: row.descripcion ?? null,
+          price: Number(row.precio),
+          category_id: row.categoria_id ?? null,
+          image_url: row.imagen || "",
+          stock: row.stok || 0,
+          categories: { name: row.categoria || "Sin categoría" },
+        }))
+      );
     setLoading(false);
   };
 
@@ -62,9 +71,8 @@ const Index = () => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesCategory =
-      selectedCategory === "all" || product.category_id === selectedCategory;
+      selectedCategory === "all" || product.categories?.name === selectedCategory;
 
     const productPrice = Number(product.price);
     const min = minPrice ? Number(minPrice) : 0;

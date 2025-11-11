@@ -34,11 +34,11 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { z } from "zod";
 
 const productSchema = z.object({
-  name: z.string().trim().min(1, "El nombre es requerido").max(200),
+  nombre: z.string().trim().min(1, "El nombre es requerido").max(200),
   description: z.string().trim().max(1000).optional(),
-  price: z.number().min(0.01, "El precio debe ser mayor a 0"),
-  category_id: z.string().uuid("Selecciona una categoría"),
-  image_url: z.string().url("URL de imagen inválida").max(500),
+  precio: z.number().min(0.01, "El precio debe ser mayor a 0"),
+  categoria: z.string().uuid("Selecciona una categoría"),
+  imagen: z.string().url("URL de imagen inválida").max(500),
   stock: z.number().int().min(0, "El stock no puede ser negativo"),
 });
 
@@ -49,13 +49,12 @@ interface Category {
 
 interface Product {
   id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  category_id: string | null;
-  image_url: string | null;
+  nombre: string;
+  precio: number;
+  categoria: string ,
+  imagen: string | null;
   stock: number;
-  categories: { name: string } | null;
+  destacado: boolean | null;
 }
 
 const Admin = () => {
@@ -69,11 +68,10 @@ const Admin = () => {
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category_id: "",
-    image_url: "",
+    nombre: "",
+    precio: "",
+    categoria: "",
+    imagen: "",
     stock: "",
   });
 
@@ -124,19 +122,31 @@ const Admin = () => {
 
   const fetchProducts = async () => {
     const { data } = await supabase
-      .from("products")
-      .select(`*, categories (name)`)
+      .from("productos")
+      .select("*")
       .order("created_at", { ascending: false });
-    if (data) setProducts(data);
+
+    if (data)
+      setProducts(
+        data.map((row: any) => ({
+          id: row.id,
+          nombre: row.nombre,
+
+          precio: Number(row.precio),
+          imagen: row.imagen || "",
+          stock: row.stok || 0,
+          categoria: row.categoria || "",
+          destacado: row.destacado || false,
+        }))
+      );
   };
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      description: "",
-      price: "",
-      category_id: "",
-      image_url: "",
+      nombre: "",
+      precio: "",
+      categoria: "",
+      imagen: "",
       stock: "",
     });
     setEditingProduct(null);
@@ -145,11 +155,12 @@ const Admin = () => {
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
-      name: product.name,
-      description: product.description || "",
-      price: product.price.toString(),
-      category_id: product.category_id || "",
-      image_url: product.image_url || "",
+      nombre: product.nombre,
+      precio: product.precio.toString(),
+      // map category name back to category id if possible
+      categoria:
+        categories.find((c) => c.name === product.categoria)?.id || "",
+      imagen: product.imagen || "",
       stock: product.stock.toString(),
     });
     setDialogOpen(true);
@@ -161,21 +172,23 @@ const Admin = () => {
     try {
       const validated = productSchema.parse({
         ...formData,
-        price: Number(formData.price),
+        price: Number(formData.precio),
         stock: Number(formData.stock),
       });
 
       if (editingProduct) {
+        const payload = {
+          nombre: validated.nombre,
+          precio: validated.precio,
+          categoria:
+            categories.find((c) => c.id === validated.categoria)?.name || "",
+          imagen: validated.imagen,
+          stock: validated.stock,
+        };
+
         const { error } = await supabase
-          .from("products")
-          .update({
-            name: validated.name,
-            description: validated.description,
-            price: validated.price,
-            category_id: validated.category_id,
-            image_url: validated.image_url,
-            stock: validated.stock,
-          })
+          .from("productos")
+          .update(payload)
           .eq("id", editingProduct.id);
 
         if (error) throw error;
@@ -185,14 +198,17 @@ const Admin = () => {
           description: "El producto se actualizó correctamente",
         });
       } else {
-        const { error } = await supabase.from("products").insert([{
-          name: validated.name,
-          description: validated.description,
-          price: validated.price,
-          category_id: validated.category_id,
-          image_url: validated.image_url,
+        const payload = {
+          nombre: validated.nombre,
+          precio: validated.precio,
+          categoria:
+            categories.find((c) => c.id === validated.categoria)?.name || "",
+          imagen: validated.imagen,
           stock: validated.stock,
-        }]);
+          destacado: false,
+        };
+
+        const { error } = await supabase.from("productos").insert([payload]);
 
         if (error) throw error;
 
@@ -225,7 +241,7 @@ const Admin = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    const { error } = await supabase.from("productos").delete().eq("id", id);
 
     if (error) {
       toast({
@@ -288,27 +304,16 @@ const Admin = () => {
                   <Label htmlFor="name">Nombre *</Label>
                   <Input
                     id="name"
-                    value={formData.name}
+                    value={formData.nombre}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setFormData({ ...formData, nombre: e.target.value })
                     }
                     required
                     maxLength={200}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descripción</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
-                    maxLength={1000}
-                  />
-                </div>
+          
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -318,9 +323,9 @@ const Admin = () => {
                       type="number"
                       step="0.01"
                       min="0.01"
-                      value={formData.price}
+                      value={formData.precio}
                       onChange={(e) =>
-                        setFormData({ ...formData, price: e.target.value })
+                        setFormData({ ...formData, precio: e.target.value })
                       }
                       required
                     />
@@ -344,18 +349,18 @@ const Admin = () => {
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoría *</Label>
                   <Select
-                    value={formData.category_id}
+                    value={formData.categoria}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, category_id: value })
+                      setFormData({ ...formData, categoria: value })
                     }
                   >
                     <SelectTrigger id="category">
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
+                      {products.map((producto) => (
+                        <SelectItem key={producto.id} value={producto.categoria}>
+                          {producto.nombre}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -367,9 +372,9 @@ const Admin = () => {
                   <Input
                     id="image_url"
                     type="url"
-                    value={formData.image_url}
+                    value={formData.imagen}
                     onChange={(e) =>
-                      setFormData({ ...formData, image_url: e.target.value })
+                      setFormData({ ...formData, imagen: e.target.value })
                     }
                     required
                     maxLength={500}
@@ -418,14 +423,14 @@ const Admin = () => {
                   <TableRow key={product.id}>
                     <TableCell>
                       <img
-                        src={product.image_url}
-                        alt={product.name}
+                        src={product.imagen}
+                        alt={product.nombre}
                         className="w-12 h-12 object-cover rounded"
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.categories?.name}</TableCell>
-                    <TableCell>${Number(product.price).toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">{product.nombre}</TableCell>
+                    <TableCell>{product.categoria}</TableCell>
+                    <TableCell>${Number(product.precio).toFixed(2)}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
