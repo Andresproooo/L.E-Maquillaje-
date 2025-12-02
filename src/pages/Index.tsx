@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Navbar } from "@/components/Navbar";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductFilters } from "@/components/ProductFilters";
 import { Sparkles } from "lucide-react";
@@ -24,25 +23,30 @@ interface Category {
 
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "Insumos De Pestañas", name: "Insumos De Pestañas", slug: "insumos-de-pestanas" },
+    { id: "Insumos De Uñas", name: "Insumos De Uñas", slug: "insumos-de-unas" },
+    { id: "Maquillaje", name: "Maquillaje", slug: "maquillaje" },
+    { id: "Productos Varios", name: "Productos Varios", slug: "productos-varios" },
+    { id: "Skincare", name: "Skincare", slug: "skincare" },
+  ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
-    fetchCategories();
     fetchProducts();
   }, []);
 
-  const fetchCategories = async () => {
-    const { data } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name");
-    if (data) setCategories(data);
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, minPrice, maxPrice]);
+
+
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -60,7 +64,7 @@ const Index = () => {
           price: Number(row.precio),
           category_id: row.categoria_id ?? null,
           image_url: row.imagen || "",
-          stock: row.stok || 0,
+          stock: row.stock || 0,
           categories: { name: row.categoria || "Sin categoría" },
         }))
       );
@@ -72,7 +76,9 @@ const Index = () => {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      selectedCategory === "all" || product.categories?.name === selectedCategory;
+      selectedCategory === "all" ||
+      product.categories?.name?.toLowerCase().trim() ===
+        selectedCategory.toLowerCase().trim();
 
     const productPrice = Number(product.price);
     const min = minPrice ? Number(minPrice) : 0;
@@ -82,25 +88,25 @@ const Index = () => {
     return matchesSearch && matchesCategory && matchesPrice;
   });
 
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      <Navbar />
-
       {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 opacity-50" />
+      <section className="relative py-24 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 opacity-50" />
         <div className="container mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Tu tienda de belleza
-            </span>
+          <div className="inline-flex items-center gap-2 mb-6 animate-fade-in">
+         
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-            Realza tu Belleza 
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent font-serif leading-tight">
+            Bienvenidos a L.E Maquillaje
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Descubre productos  para cuidar tu piel y realzar tu belleza
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
+            Descubre nuestra colección exclusiva de productos para el cuidado de la piel y maquillaje.
+            Calidad premium para resaltar lo mejor de ti.
           </p>
         </div>
       </section>
@@ -132,7 +138,7 @@ const Index = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+            {currentProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
@@ -144,6 +150,28 @@ const Index = () => {
                 stock={product.stock}
               />
             ))}
+          </div>
+        )}
+
+        {filteredProducts.length > ITEMS_PER_PAGE && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+            >
+              Anterior
+            </button>
+            <span className="text-muted-foreground">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+            >
+              Siguiente
+            </button>
           </div>
         )}
       </section>

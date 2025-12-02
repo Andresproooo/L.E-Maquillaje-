@@ -37,16 +37,28 @@ All colors MUST be HSL.
     --ring: 340 82% 52%;
 
     --radius: 0.75rem;
-    
+
     /* Gradientes elegantes */
-    --gradient-primary: linear-gradient(135deg, hsl(340 82% 52%) 0%, hsl(43 74% 66%) 100%);
-    --gradient-soft: linear-gradient(180deg, hsl(330 100% 99%) 0%, hsl(330 60% 98%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(330 50% 98%) 100%);
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(340 82% 52%) 0%,
+      hsl(43 74% 66%) 100%
+    );
+    --gradient-soft: linear-gradient(
+      180deg,
+      hsl(330 100% 99%) 0%,
+      hsl(330 60% 98%) 100%
+    );
+    --gradient-card: linear-gradient(
+      135deg,
+      hsl(0 0% 100%) 0%,
+      hsl(330 50% 98%) 100%
+    );
+
     /* Sombras suaves */
     --shadow-soft: 0 2px 20px -5px hsl(340 82% 52% / 0.15);
     --shadow-hover: 0 8px 30px -8px hsl(340 82% 52% / 0.25);
-    
+
     /* Transiciones */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -95,10 +107,22 @@ All colors MUST be HSL.
     --border: 340 15% 25%;
     --input: 340 15% 25%;
     --ring: 340 82% 52%;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(340 82% 45%) 0%, hsl(43 74% 55%) 100%);
-    --gradient-soft: linear-gradient(180deg, hsl(340 20% 8%) 0%, hsl(340 20% 12%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(340 18% 12%) 0%, hsl(340 20% 15%) 100%);
+
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(340 82% 45%) 0%,
+      hsl(43 74% 55%) 100%
+    );
+    --gradient-soft: linear-gradient(
+      180deg,
+      hsl(340 20% 8%) 0%,
+      hsl(340 20% 12%) 100%
+    );
+    --gradient-card: linear-gradient(
+      135deg,
+      hsl(340 18% 12%) 0%,
+      hsl(340 20% 15%) 100%
+    );
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -116,6 +140,15 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
   }
 }

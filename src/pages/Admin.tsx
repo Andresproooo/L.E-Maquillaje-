@@ -37,7 +37,7 @@ const productSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es requerido").max(200),
   description: z.string().trim().max(1000).optional(),
   precio: z.number().min(0.01, "El precio debe ser mayor a 0"),
-  categoria: z.string().uuid("Selecciona una categoría"),
+  categoria: z.string().min(1, "Selecciona una categoría"),
   imagen: z.string().url("URL de imagen inválida").max(500),
   stock: z.number().int().min(0, "El stock no puede ser negativo"),
 });
@@ -59,7 +59,13 @@ interface Product {
 
 const Admin = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories] = useState<Category[]>([
+    { id: "Insumos De Pestañas", name: "Insumos De Pestañas" },
+    { id: "Insumos De Uñas", name: "Insumos De Uñas" },
+    { id: "Maquillaje", name: "Maquillaje" },
+    { id: "Productos Varios", name: "Productos Varios" },
+    { id: "Skincare", name: "Skincare" },
+  ]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -107,18 +113,11 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    fetchCategories();
     fetchProducts();
     setLoading(false);
   };
 
-  const fetchCategories = async () => {
-    const { data } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name");
-    if (data) setCategories(data);
-  };
+
 
   const fetchProducts = async () => {
     const { data } = await supabase
@@ -134,7 +133,7 @@ const Admin = () => {
 
           precio: Number(row.precio),
           imagen: row.imagen || "",
-          stock: row.stok || 0,
+          stock: row.stock || 0,
           categoria: row.categoria || "",
           destacado: row.destacado || false,
         }))
@@ -157,9 +156,7 @@ const Admin = () => {
     setFormData({
       nombre: product.nombre,
       precio: product.precio.toString(),
-      // map category name back to category id if possible
-      categoria:
-        categories.find((c) => c.name === product.categoria)?.id || "",
+      categoria: product.categoria,
       imagen: product.imagen || "",
       stock: product.stock.toString(),
     });
@@ -180,8 +177,7 @@ const Admin = () => {
         const payload = {
           nombre: validated.nombre,
           precio: validated.precio,
-          categoria:
-            categories.find((c) => c.id === validated.categoria)?.name || "",
+          categoria: validated.categoria,
           imagen: validated.imagen,
           stock: validated.stock,
         };
@@ -201,8 +197,7 @@ const Admin = () => {
         const payload = {
           nombre: validated.nombre,
           precio: validated.precio,
-          categoria:
-            categories.find((c) => c.id === validated.categoria)?.name || "",
+          categoria: validated.categoria,
           imagen: validated.imagen,
           stock: validated.stock,
           destacado: false,
@@ -358,9 +353,9 @@ const Admin = () => {
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      {products.map((producto) => (
-                        <SelectItem key={producto.id} value={producto.categoria}>
-                          {producto.nombre}
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -11,7 +11,7 @@ import { Sparkles } from "lucide-react";
 import { z } from "zod";
 
 const authSchema = z.object({
-  email: z.string().email({ message: "Email inválido" }).max(255),
+  email: z.string().trim().min(1, { message: "El email es requerido" }).max(255),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }).max(100),
   fullName: z.string().trim().min(2, { message: "El nombre debe tener al menos 2 caracteres" }).max(100).optional(),
 });
@@ -129,9 +129,9 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-[var(--shadow-hover)] border-border">
         <CardHeader className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Belleza Shop
+              L.E_Maquillaje
             </span>
           </div>
           <CardTitle className="text-2xl">Bienvenido</CardTitle>
